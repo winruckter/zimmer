@@ -1,0 +1,6 @@
+{
+    "DefaultPort": "8080",
+    "CommonURL": "http://127.0.0.1:5700/",
+    "SendPrivateMsgs": "send_private_msg",
+    "SendGroupMsgs": "send_group_msg"
+}

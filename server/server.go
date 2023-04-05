@@ -5,19 +5,19 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/qqbot_zimmer/zimmer/internal/config/initparams"
+	configure "github.com/qqbot_zimmer/zimmer/internal/config"
 	register "github.com/qqbot_zimmer/zimmer/router"
 )
 
 //StartHTTPServer 开启http服务
 func StartHTTPServer() {
+	//参数初始化
+	paramsForRequest := configure.GetParamsForRequest()
+
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = initparams.DefaultPort
+		port = paramsForRequest.DefaultPort
 	}
-
-	//参数初始化
-	initparams.GetInstance()
 
 	router := InitGinEngine()
 

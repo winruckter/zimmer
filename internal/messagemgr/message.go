@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/qqbot_zimmer/zimmer/internal/config/initparams"
+	configure "github.com/qqbot_zimmer/zimmer/internal/config"
 )
 
 //Message 消息对象
@@ -72,16 +72,16 @@ func (mc *MessageContents) GenerateCQFaceContent(faceID int64) {
 	} else {
 		num = faceID
 	}
-	reqURL := initparams.GetInstance()
-	CQType := reqURL.CQType.Face
+	cqType := configure.GetCQType()
+	CQType := cqType.Face
 	//随机生成了一个表情id
 	mc.Value = fmt.Sprintf("[CQ:%s,id=%d]", CQType, num) // 使用 Sprintf 函数生成字符串
 }
 
 //GenerateCQAtContent 生成消息内容
 func (mc *MessageContents) GenerateCQAtContent(to int64, nickname string, isAll bool) {
-	reqURL := initparams.GetInstance()
-	CQType := reqURL.CQType.At
+	cqType := configure.GetCQType()
+	CQType := cqType.At
 
 	var name string
 	if nickname == "" {
@@ -100,16 +100,16 @@ func (mc *MessageContents) GenerateCQAtContent(to int64, nickname string, isAll 
 //GenerateCQShareContent 生成消息内容
 func (mc *MessageContents) GenerateCQShareContent(sharedURL string, title string,
 	content string /*可选参数*/, image string /*可选参数，图片url*/) {
-	reqURL := initparams.GetInstance()
-	CQType := reqURL.CQType.Share
+	cqType := configure.GetCQType()
+	CQType := cqType.Share
 	mc.Value = fmt.Sprintf("[CQ:%s,url=%s,title=%s,content=%s,image=%s]",
 		CQType, sharedURL, title, content, image)
 }
 
 //GenerateCQImageContent 生成消息内容
 func (mc *MessageContents) GenerateCQImageContent(filePath string /*本地路径或者图片的url*/) {
-	reqURL := initparams.GetInstance()
-	CQType := reqURL.CQType.Image
+	cqType := configure.GetCQType()
+	CQType := cqType.Image
 
 	/*40000	普通
 	40001	幻影
@@ -127,16 +127,16 @@ func (mc *MessageContents) GenerateCQImageContent(filePath string /*本地路径
 //GenerateCQTtsContent 生成消息内容
 func (mc *MessageContents) GenerateCQTtsContent(text string) {
 	//仅支持群聊
-	reqURL := initparams.GetInstance()
-	CQType := reqURL.CQType.Tts
+	cqType := configure.GetCQType()
+	CQType := cqType.Tts
 
 	mc.Value = fmt.Sprintf("[CQ:%s,text=%s]", CQType, text)
 }
 
 //GenerateCQPokeContent 生成消息体
 func (mc *MessageContents) GenerateCQPokeContent(to int64 /*qq号*/) {
-	reqURL := initparams.GetInstance()
-	CQType := reqURL.CQType.Poke
+	cqType := configure.GetCQType()
+	CQType := cqType.Poke
 
 	mc.Value = fmt.Sprintf("[CQ:%s,qq=%d]", CQType, to)
 }

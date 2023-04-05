@@ -3,7 +3,7 @@ package messagemgr
 import (
 	"strings"
 
-	"github.com/qqbot_zimmer/zimmer/internal/config/initparams"
+	configure "github.com/qqbot_zimmer/zimmer/internal/config"
 	"github.com/tidwall/gjson"
 )
 
@@ -46,7 +46,7 @@ type Distributer struct {
 //DitributeMsgToSender 向Sender分发消息(之后可能会有多种Sender，留作扩展)
 func (g *Distributer) DitributeMsgToSender(messageBody string) {
 	//获取一些初始化参数
-	initParams := initparams.GetInstance()
+	cqType := configure.GetCQType()
 	//生成器
 	generator := Generator{
 		message: Message{},
@@ -76,7 +76,7 @@ func (g *Distributer) DitributeMsgToSender(messageBody string) {
 		CQParams = struct {
 			text string
 		}{text: sourceMessage}
-		addParams.SetAdditionalParams(true, initParams.CQType.Tts, CQParams)
+		addParams.SetAdditionalParams(true, cqType.Tts, CQParams)
 		//转CQParams类型
 		p, ok := CQParams.(struct{ text string })
 		if !ok {
@@ -90,7 +90,7 @@ func (g *Distributer) DitributeMsgToSender(messageBody string) {
 		CQParams = struct {
 			faceID int64
 		}{faceID: 999}
-		addParams.SetAdditionalParams(true, initParams.CQType.Face, CQParams)
+		addParams.SetAdditionalParams(true, cqType.Face, CQParams)
 		generator.content.GenerateCQFaceContent(CQParams.(struct{ faceID int64 }).faceID)
 		generator.message.Content = generator.content.Value
 		sender.SendData(&generator.message)
@@ -101,7 +101,7 @@ func (g *Distributer) DitributeMsgToSender(messageBody string) {
 			nickname string
 		}{to: generator.message.Related, isAll: false,
 			nickname: generator.message.ToName}
-		addParams.SetAdditionalParams(true, initParams.CQType.At, CQParams)
+		addParams.SetAdditionalParams(true, cqType.At, CQParams)
 		//转CQParams类型
 		p, ok := CQParams.(struct {
 			to       int64
@@ -118,7 +118,7 @@ func (g *Distributer) DitributeMsgToSender(messageBody string) {
 		CQParams = struct {
 			to int64
 		}{to: generator.message.Related}
-		addParams.SetAdditionalParams(true, initParams.CQType.Poke, CQParams)
+		addParams.SetAdditionalParams(true, cqType.Poke, CQParams)
 		//转CQParams类型
 		p, ok := CQParams.(struct{ to int64 })
 		if !ok {
