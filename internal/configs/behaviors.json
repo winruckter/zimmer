@@ -1,0 +1,18 @@
+[
+    {
+        "tag_name": "复述",
+        "behavior_name": "Retell"
+    },
+    {
+        "tag_name": "心情",
+        "behavior_name": "Emoji"
+    },
+    {
+        "tag_name": "季默",
+        "behavior_name": "AtPerson"
+    },
+    {
+        "tag_name": "夹你",
+        "behavior_name": "PokePerson"
+    }
+]
