@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 //SetConfig 快速解码配置文件并给结构体赋值接口
@@ -12,13 +13,11 @@ type SetConfig interface {
 }
 
 //GetConfigFromFile 读取配置文件返回map类型数据
-func GetConfigFromFile(path string) (map[string]interface{}, error) {
-	config := make(map[string]interface{})
-
-	file, err := os.Open("path")
+func GetConfigFromFile(path string, config *map[string]interface{}) error {
+	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Open config file error:", err)
-		return config, err
+		return err
 	}
 	defer file.Close()
 
@@ -26,10 +25,10 @@ func GetConfigFromFile(path string) (map[string]interface{}, error) {
 	err = decoder.Decode(&config)
 	if err != nil {
 		fmt.Println("Decode config file error:", err)
-		return config, err
+		return err
 	}
 
-	return config, err
+	return err
 }
 
 //GetConfigObjectFrom 获取某个具体的值
@@ -50,4 +49,31 @@ func ConfigKeyIsExist(config map[string]interface{}, key string) (string, bool) 
 		value = config[key].(string)
 		return value, false
 	}
+}
+
+func generateFileObj(fileName string) (*os.File, error) {
+	var resultPath string
+	exPath, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exDir := filepath.Dir(exPath)
+	parentDir := filepath.Dir(exDir)
+	resultPath = filepath.Join(parentDir, "internal", "configs", fileName)
+
+	file, err := os.Open(resultPath)
+	return file, err
+}
+
+func generateFilePath(fileName string) string {
+	var resultPath string
+	exPath, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exDir := filepath.Dir(exPath)
+	parentDir := filepath.Dir(exDir)
+	resultPath = filepath.Join(parentDir, "internal", "configs", fileName)
+
+	return resultPath
 }

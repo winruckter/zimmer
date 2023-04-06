@@ -3,8 +3,7 @@ package configure
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
+	"reflect"
 	"sync"
 )
 
@@ -23,12 +22,12 @@ var (
 
 //GetParamsForRequest 单例初始化
 func GetParamsForRequest() *ParamsForRequest {
-	onceForParams.Do(InitConfigForParams)
+	onceForParams.Do(initConfigForParams)
 	return paramsForRequest
 }
 
 //InitConfigForParams 根据配置生成结构体
-func InitConfigForParams() {
+func initConfigForParams() {
 	fileName := "params.json"
 	file, err := generateFileObj(fileName)
 	if err != nil {
@@ -65,12 +64,12 @@ var (
 
 //GetCQType 单例初始化
 func GetCQType() *CQType {
-	onceForCQType.Do(InitConfigForCQType)
+	onceForCQType.Do(initConfigForCQType)
 	return cqType
 }
 
 //InitConfigForCQType 根据配置生成结构体
-func InitConfigForCQType() {
+func initConfigForCQType() {
 	fileName := "cqtype.json"
 	file, err := generateFileObj(fileName)
 	if err != nil {
@@ -86,17 +85,15 @@ func InitConfigForCQType() {
 		fmt.Println("Decode config file error:", err)
 		return
 	}
-}
 
-func generateFileObj(fileName string) (*os.File, error) {
-	exPath, err := os.Executable()
-	if err != nil {
-		panic(err)
+	var p interface{}
+	v := reflect.ValueOf(p)
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+
+		fmt.Printf("%s (%s) = %v\n", fieldType.Name, fieldType.Type, field.Interface())
 	}
-	exDir := filepath.Dir(exPath)
-	parentDir := filepath.Dir(exDir)
-	filePath := filepath.Join(parentDir, "internal", "configs", fileName)
-
-	file, err := os.Open(filePath)
-	return file, err
 }

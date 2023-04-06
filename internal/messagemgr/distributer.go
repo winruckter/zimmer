@@ -1,6 +1,8 @@
 package messagemgr
 
 import (
+	"reflect"
+	"regexp"
 	"strings"
 
 	configure "github.com/qqbot_zimmer/zimmer/internal/config"
@@ -19,8 +21,6 @@ func (g *Generator) Message(messageBody string) {
 	messageType := gjson.Get(string(messageBody), "message_type").String()
 	//获取信息内容
 	content := gjson.Get(string(messageBody), "message").String()
-	//去掉开头的'#'
-	content = content[1:]
 	var to int64
 
 	nickname := gjson.Get(string(messageBody), "sender.nickname").String()
@@ -46,7 +46,7 @@ type Distributer struct {
 //DitributeMsgToSender 向Sender分发消息(之后可能会有多种Sender，留作扩展)
 func (g *Distributer) DitributeMsgToSender(messageBody string) {
 	//获取一些初始化参数
-	cqType := configure.GetCQType()
+	//cqType := configure.GetCQType()
 	//生成器
 	generator := Generator{
 		message: Message{},
@@ -56,83 +56,20 @@ func (g *Distributer) DitributeMsgToSender(messageBody string) {
 
 	//监听到的源消息
 	sourceMessage := generator.message.Content
-	//消息的附加参数
-	addParams := Parameters{}
-	//附加参数的自定义CQ参数(自定义匿名结构体)
-	var CQParams interface{}
-	//待修改
-	//考虑这块从配置文件中配置一些关键词关联一些行为方法,将条件语句内的处理整合成行为函数
-	substr1 := []string{"复述:"}
-	substr2 := []string{"心情"}
-	substr3 := []string{"季默"}
-	substr4 := []string{"夹你"}
-	sender := Sender{}
-	if IsContain(sourceMessage, substr1) {
-		idx := strings.Index(sourceMessage, substr4[0])
-		addParams.CQType = "tts"
-		// 取找到的第一个子字符串的后续的字符串
-		sourceMessage := sourceMessage[idx+len(substr4[0]):]
 
-		CQParams = struct {
-			text string
-		}{text: sourceMessage}
-		addParams.SetAdditionalParams(true, cqType.Tts, CQParams)
-		//转CQParams类型
-		p, ok := CQParams.(struct{ text string })
-		if !ok {
-			return
-		}
-		//生成消息内容
-		generator.content.GenerateCQTtsContent(p.text)
-		generator.message.Content = generator.content.Value
-		sender.SendData(&generator.message)
-	} else if IsContain(sourceMessage, substr2) {
-		CQParams = struct {
-			faceID int64
-		}{faceID: 999}
-		addParams.SetAdditionalParams(true, cqType.Face, CQParams)
-		generator.content.GenerateCQFaceContent(CQParams.(struct{ faceID int64 }).faceID)
-		generator.message.Content = generator.content.Value
-		sender.SendData(&generator.message)
-	} else if IsContain(sourceMessage, substr3) {
-		CQParams = struct {
-			to       int64
-			isAll    bool
-			nickname string
-		}{to: generator.message.Related, isAll: false,
-			nickname: generator.message.ToName}
-		addParams.SetAdditionalParams(true, cqType.At, CQParams)
-		//转CQParams类型
-		p, ok := CQParams.(struct {
-			to       int64
-			isAll    bool
-			nickname string
-		})
-		if !ok {
-			return
-		}
-		generator.content.GenerateCQAtContent(p.to, p.nickname, p.isAll)
-		generator.message.Content = generator.content.Value
-		sender.SendData(&generator.message)
-	} else if IsContain(sourceMessage, substr4) {
-		CQParams = struct {
-			to int64
-		}{to: generator.message.Related}
-		addParams.SetAdditionalParams(true, cqType.Poke, CQParams)
-		//转CQParams类型
-		p, ok := CQParams.(struct{ to int64 })
-		if !ok {
-			return
-		}
-		generator.content.GenerateCQPokeContent(p.to)
-		generator.message.Content = generator.content.Value
-		sender.SendData(&generator.message)
-	} else {
-		addParams.SetAdditionalParams(false, "", CQParams)
-		generator.content.GenerateGeneralContent("test")
-		generator.message.Content = generator.content.Value
-		sender.SendData(&generator.message)
+	behaviors := configure.GetBehaviors()
+	var behavior string
+	tag, restMsg := matchRegex(sourceMessage)
+	if value, ok := (*behaviors)[tag]; ok {
+		behavior = value
 	}
+	sender := Sender{}
+	if behavior == "" {
+		behavior = "ReplyCommMsg"
+	}
+	funcArgs := []reflect.Value{reflect.ValueOf(restMsg), reflect.ValueOf(&generator)}
+	RunReflectFunc(behavior, funcArgs)
+	sender.SendData(&generator.message)
 }
 
 //IsContain 判断消息中是否含有某关键词
@@ -143,4 +80,11 @@ func IsContain(msg string, subStr []string) bool {
 		}
 	}
 	return false
+}
+
+//匹配正则表达式
+func matchRegex(str string) (string, string) {
+	re := regexp.MustCompile(`^#(?P<content>.*)#(?P<rest>.*)$`)
+	match := re.FindStringSubmatch(str)
+	return match[1], match[2]
 }
